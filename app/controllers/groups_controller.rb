@@ -1,6 +1,6 @@
 class GroupsController < ApplicationController
   before_action :authenticate_user! , only: [:new, :create, :create, :edit, :update, :destroy]
-  before_action :find_group_and_check_permission, only: [:edit, :update, :destroy]
+  before_action :find_group_and_check_permission, only: [:edit, :update, :destroy, :join, :quit]
 
   def index
     @groups = Group.all
@@ -8,7 +8,7 @@ class GroupsController < ApplicationController
 
   def show
     @group = Group.find(params[:id])
-    @posts = @group.posts.recent.paginate(:page => params[:page], :per_page => 5) 
+    @posts = @group.posts.recent.paginate(:page => params[:page], :per_page => 5)
   end
 
   def edit
@@ -41,6 +41,32 @@ class GroupsController < ApplicationController
     @group.destroy
     flash[:alert] = "Group deleted"
     redirect_to groups_path
+  end
+
+  def join
+    @group = Group.find(params[:id])
+
+    if !current_user.is_member_of?(@group)
+      current_user.join!(@group)
+      flash[:notice] = "Join in team successfuly!"
+    else
+      flash[:warning] = "You've been membership!"
+    end
+
+    redirect_to group_path(@group)
+  end
+
+  def quit
+    @group = Group.find(params[:id])
+
+    if current_user.is_member_of?(@group)
+      current_user.quit!(@group)
+      flash[:alert] = "You've been quitted!"
+    else
+      flash[:warning] = "You're not membership,how to quit? XD"
+    end
+
+    redirect_to group_path(@group)
   end
 
 
